@@ -1,12 +1,15 @@
 # Parking Lot Capacity Analysis
 
-![GitHub issues](https://img.shields.io/github/issues/user/repo?style=flat-square)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/user/repo?style=flat-square)
-![GitHub last commit](https://img.shields.io/github/last-commit/user/repo?style=flat-square)
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/user/repo/CI?style=flat-square)
-![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/user/repo?style=flat-square)
-![GitHub top language](https://img.shields.io/github/languages/top/user/repo?style=flat-square)
-![GitHub](https://img.shields.io/github/license/user/repo?style=flat-square)
+
+![GitHub issues](https://img.shields.io/github/issues/craftyshark/parkingDataA)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/craftyshark/parkingDataA)
+![GitHub last commit](https://img.shields.io/github/last-commit/craftyshark/parkingDataA)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/craftyshark/parkingDataA/CI)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/craftyshark/parkingDataA)
+![GitHub top language](https://img.shields.io/github/languages/top/craftyshark/parkingDataA)
+
+<!-- rest of your README content -->
+
 
 This project analyzes the parking lot capacity of a university campus based on the number of students attending classes in various buildings and their distribution to different parking lots.
 
