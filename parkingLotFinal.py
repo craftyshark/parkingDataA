@@ -1,61 +1,65 @@
+
 import json
 
-# Load data from files
+# Load data from output.json and buildingToParkingLot.json
 with open('output.json', 'r') as f:
-    enrollment_data = json.load(f)
+    output_data = json.load(f)
 
 with open('buildingToParkingLot.json', 'r') as f:
-    building_to_parking_lot = json.load(f)
+    building_to_parking_lot_data = json.load(f)
 
-# Initialize parking lot capacities
+# Initialize parking lot capacities and availability for each time slot
 parking_lot_capacities = {
     "SMC1": 610, "SMC2": 606, "SMC3": 661, "SMC4": 154,
-    "P1": 446, "P2": 502, "P3": 200, "P5": 665, "P6": 1050,
-    "P11": 200, "P15": 203, "P20": 1335, "P27": 971
+    "P1": 446, "P2": 502, "P3": 200, "P5": 665,
+    "P6": 1050, "P11": 200, "P15": 203, "P20": 1335, "P27": 971
 }
 
-# Function to normalize the distribution when a parking lot is full
-def normalize_distribution(distribution):
-    total = sum(distribution.values())
-    if total == 0:
-        return {}
-    return {k: v / total for k, v in distribution.items()}
+parking_lot_availability = {lot: [capacity] * 96 for lot, capacity in parking_lot_capacities.items()}
+excess_capacity_needed = {}
 
-# Initialize the main data structure for parking lot occupancy
-parking_lot_occupancy = {lot: [[0] * 96 for _ in range(7)] for lot in parking_lot_capacities}
+# Iterate over each time slot
+for time_slot in range(96):
+    print(f"Processing time slot {time_slot}")
+    excess_capacity_needed[time_slot] = 0
 
-# Iterate over each day and timeslot
-for day in range(7):
-    for timeslot in range(96):
-        # Iterate over each building
-        for building, building_enrollment in enrollment_data.items():
-            students = building_enrollment[day][timeslot]
+    # Go through each building
+    for building, building_timeslots in output_data.items():
+        students_for_timeslot = sum(day_slots[time_slot] for day_slots in building_timeslots)
 
-            # Get the building-to-parking lot distribution and normalize it
-            distribution = normalize_distribution(building_to_parking_lot.get(building, {}))
+        if students_for_timeslot == 0:
+            continue
 
-            # Distribute students to parking lots
-            while students > 0 and distribution:
-                no_more_spots = True
-                for lot, ratio in distribution.items():
-                    spots_to_fill = int(students * ratio)
+        # Get the distribution of students from the building to the parking lots
+        parking_lot_distribution = building_to_parking_lot_data[building]
+        remaining_students = students_for_timeslot
 
-                    if parking_lot_occupancy[lot][day][timeslot] + spots_to_fill <= parking_lot_capacities.get(lot, 200):
-                        parking_lot_occupancy[lot][day][timeslot] += spots_to_fill
-                        students -= spots_to_fill
-                        no_more_spots = False
-                    else:
-                        spots_filled = parking_lot_capacities.get(lot, 200) - parking_lot_occupancy[lot][day][timeslot]
-                        parking_lot_occupancy[lot][day][timeslot] = parking_lot_capacities.get(lot, 200)
-                        students -= spots_filled
-                        del distribution[lot]
+        # Calculate the number of students going to each parking lot and update availability
+        while remaining_students > 0 and parking_lot_distribution:
+            last_remaining_students = remaining_students
+            remaining_distribution_sum = sum(float(v) for v in parking_lot_distribution.values())
+            students_to_parking_lots = {lot: int(remaining_students * float(p) / remaining_distribution_sum) for lot, p in parking_lot_distribution.items()}
 
-                if no_more_spots:
-                    break
+            # Update the parking lot availability and normalize the distribution if needed
+            new_parking_lot_distribution = {}
+            for lot, students in students_to_parking_lots.items():
+                if parking_lot_availability[lot][time_slot] >= students:
+                    parking_lot_availability[lot][time_slot] -= students
+                    remaining_students -= students
+                else:
+                    remaining_students -= parking_lot_availability[lot][time_slot]
+                    parking_lot_availability[lot][time_slot] = 0
+                    new_parking_lot_distribution[lot] = parking_lot_distribution[lot]
 
-                distribution = normalize_distribution(distribution)
+            parking_lot_distribution = new_parking_lot_distribution
 
+            # Break out of the loop if there's no change in remaining students
+            if remaining_students == last_remaining_students:
+                excess_capacity_needed[time_slot] += remaining_students
+                break
 
-# Save the parking lot occupancy data to a file
-with open('parking_lot_occupancy.json', 'w') as f:
-    json.dump(parking_lot_occupancy, f, indent=2)
+    print(f"Parking lot availability for time slot {time_slot}:")
+    for lot, availability in parking_lot_availability.items():
+        print(f"{lot}: {availability[time_slot]}")
+    print(f"Excess capacity needed for time slot {time_slot}: {excess_capacity_needed[time_slot]}")
+    print("\n")
